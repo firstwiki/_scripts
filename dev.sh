@@ -3,7 +3,12 @@
 # Script for managing the _common directory. It's easier to do development if
 # using symlinks.
 
-ROOT=`dirname $0`
+if [ $(readlink -f "$0") ]; then
+    ROOT="$( cd "$( dirname "$(readlink -f "$0")" )" && pwd )"
+else
+    ROOT=`dirname $0`
+fi
+
 source $ROOT/_repos.sh
 BASE=$(abspath $ROOT/..)
 
