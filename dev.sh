@@ -68,6 +68,14 @@ elif [ "$1" == "unlink" ]; then
         popd
     done
     
+elif [ "$1" == "git" ]; then
+    shift
+    for repo in $REPOS; do
+        pushd $repo
+        git "$@"
+        popd
+    done
+    
 elif [ "$1" == "update" ]; then
 
     for repo in $REPOS; do 
