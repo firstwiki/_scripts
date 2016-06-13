@@ -104,6 +104,13 @@ elif [ "$1" == "cmd" ]; then
         "$@"
         popd
     done
+elif [ "$1" == "cmderr" ]; then
+    shift
+    for repo in $REPOS; do
+        pushd $repo
+        "$@" || true
+        popd
+    done
 else
-    echo "Usage: $0 [cmd | link | pull | push | unlink | update]"
+    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | unlink | update]"
 fi
