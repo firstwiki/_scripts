@@ -82,7 +82,7 @@ elif [ "$1" == "git" ]; then
     shift
     cmd git "$@"
     
-elif [ "$1" == "update" ]; then
+elif [ "$1" == "update_common" ]; then
 
     for repo in $REPOS; do 
         pushd $repo
@@ -112,5 +112,5 @@ elif [ "$1" == "cmderr" ]; then
     cmderr "$@"
     
 else
-    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | unlink | update]"
+    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | unlink | update_common]"
 fi
