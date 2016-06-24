@@ -12,24 +12,24 @@ environment, but I haven't tried it.
 Setup (OSX/Linux)
 =================
 
-* Ensure that ruby is installed, you will probably want to use RVM.
-  * See https://rvm.io/rvm/install for details
+First, ensure that ruby is installed, you will probably want to use RVM (See
+https://rvm.io/rvm/install for details).
 
-* Install the required ruby packages
+Install the required ruby packages
 
 	gem install bundler
 	bundle install
 
-* Create a directory for your wiki stuff
+Create a directory for your wiki stuff
 
 	mkdir wiki
 	cd wiki
 
-* Clone this scripts repository into it
+Clone this scripts repository into it
 
 	git clone https://github.com/firstwiki/_scripts
 
-* Run './init_env.sh' to clone all repos and setup the environment
+Run './init_env.sh' to clone all repos and setup the environment
 
 	cd _scripts
 	./init_env.sh
@@ -59,7 +59,7 @@ be built first!)
 Modifying _common
 -----------------
 
-_common is a special repository that all of the repositories share, so it's
+`_common` is a special repository that all of the repositories share, so it's
 set up as a git submodule so that the code doesn't need to be copied to
 each of them. However, that makes it annoying to do local development when
 you want to change it and test on all of the repos. What you can do is use
