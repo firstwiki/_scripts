@@ -14,6 +14,23 @@ BASE=$(abspath $ROOT/..)
 
 cd "$BASE"
 
+function cmd() {
+    for repo in $REPOS; do 
+        pushd $repo
+        "$@"
+        popd
+    done
+}
+
+function cmderr() {
+    for repo in $REPOS; do 
+        pushd $repo
+        "$@" || true
+        popd
+    done
+}
+
+
 if [ "$1" == "link" ]; then
     
     
@@ -39,21 +56,14 @@ if [ "$1" == "link" ]; then
         popd
     done
     
-elif [ "$1" == "pull" ]; then
+elif [ "$1" == "build" ]; then
+    cmd jekyll build
     
-    for repo in $REPOS; do
-        pushd $repo
-        git pull
-        popd
-    done
+elif [ "$1" == "pull" ]; then
+    cmd git pull
     
 elif [ "$1" == "push" ]; then
-    
-    for repo in $REPOS; do
-        pushd $repo
-        git push
-        popd
-    done
+    cmd git push
     
 elif [ "$1" == "unlink" ]; then
     
@@ -70,11 +80,7 @@ elif [ "$1" == "unlink" ]; then
     
 elif [ "$1" == "git" ]; then
     shift
-    for repo in $REPOS; do
-        pushd $repo
-        git "$@"
-        popd
-    done
+    cmd git "$@"
     
 elif [ "$1" == "update" ]; then
 
@@ -99,18 +105,12 @@ elif [ "$1" == "update" ]; then
 
 elif [ "$1" == "cmd" ]; then
     shift
-    for repo in $REPOS; do
-        pushd $repo
-        "$@"
-        popd
-    done
+    cmd "$@"
+    
 elif [ "$1" == "cmderr" ]; then
     shift
-    for repo in $REPOS; do
-        pushd $repo
-        "$@" || true
-        popd
-    done
+    cmderr "$@"
+    
 else
     echo "Usage: $0 [cmd | cmderr | git | link | pull | push | unlink | update]"
 fi
