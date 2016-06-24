@@ -45,6 +45,17 @@ Or to build all sites:
 
 	./dev.sh build
 
+To serve an individual site locally, you can use jekyll to do this. Each repo has
+'run_server.sh' script that will do this:
+
+	cd wiki
+	./run_server.sh
+
+To serve all of the sites at the same time, then use this (requires all sites to
+be built first!)
+
+	./dev.sh serve_site
+
 Modifying _common
 -----------------
 

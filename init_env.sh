@@ -4,6 +4,7 @@ cd `dirname $0`
 
 source _repos.sh
 ROOT=$(abspath `pwd`)
+BASE=$(abspath $ROOT/..)
 
 CLONE_ROOT="https://github.com/firstwiki"
 
@@ -37,14 +38,24 @@ for repo in $ALL_REPOS; do
 	fi
 done
 
-echo "Clones complete, creating combined _site directory"
+echo "Clones complete."
 
 # Create _site directory that contains everything
 if [ ! -d _site ]; then
+	echo "Creating combined _site directory"
+
 	mkdir _site
 
 	for repo in $REPOS; do
-		ln -s $repo/_site _site/$repo
+		if [ "$repo" != "firstwiki.github.io" ]; then
+			ln -s "$BASE"/$repo/_site _site/$repo
+		fi
+	done
+
+	# special case.. TODO, make less special
+	SPECIAL="common docs news search index.html 404.html"
+	for s in $SPECIAL; do
+		ln -s "$BASE"/firstwiki.github.io/_site/$s _site/$s
 	done
 fi
 

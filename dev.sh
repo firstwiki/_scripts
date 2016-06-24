@@ -111,6 +111,14 @@ elif [ "$1" == "cmderr" ]; then
     shift
     cmderr "$@"
     
+elif [ "$1" == "serve_site" ]; then
+    shift
+    if [ ! -d _site ]; then
+        echo "_site does not exist, did you run init_env.sh?"
+    else
+        jekyll serve --no-watch --skip-initial-build
+    fi
+
 else
-    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | unlink | update_common]"
+    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | serve_site | unlink | update_common]"
 fi
