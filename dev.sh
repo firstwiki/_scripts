@@ -57,7 +57,7 @@ if [ "$1" == "link" ]; then
     done
     
 elif [ "$1" == "build" ]; then
-    cmd jekyll build
+    cmd jekyll build --config _config.yml,_common/_config_common.yml
     
 elif [ "$1" == "pull" ]; then
     cmd git pull
