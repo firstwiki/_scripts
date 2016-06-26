@@ -389,7 +389,7 @@ if __name__ == '__main__':
     cache_path = abspath(join(dirname(__file__), '.cache'))
     p = Processor(cache_path)
     
-    name = sys.argv[1]
+    name = name.replace('https://github.com/', '')
     data, guesses = p.process(name)
 
     if team:
