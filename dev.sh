@@ -116,7 +116,23 @@ elif [ "$1" == "serve_site" ]; then
     if [ ! -d _site ]; then
         echo "_site does not exist, did you run init_env.sh?"
     else
-        jekyll serve --no-watch --skip-initial-build
+        if [ "$1" == "--watch" ]; then
+            
+            # This is pretty cool -- launches all of the sites in parallel, and
+            # they get autoregenerated automatically. When you hit CTRL-C to kill
+            # it, then they all die at the same time
+            
+            for repo in $REPOS; do 
+                pushd $repo
+                jekyll build --incremental --watch --config _config.yml,_common/_config_common.yml &
+                popd
+            done
+        
+            jekyll serve --no-watch --skip-initial-build &
+            wait
+        else
+            jekyll serve --no-watch --skip-initial-build
+        fi
     fi
 
 else

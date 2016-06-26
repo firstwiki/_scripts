@@ -56,6 +56,11 @@ be built first!)
 
 	./dev.sh serve_site
 
+If you wish jekyll to watch the files and autoregenerate them when serving the
+site, this will launch all of the sites and watch them:
+
+	./dev.sh serve_site --watch
+
 Modifying _common
 -----------------
 
