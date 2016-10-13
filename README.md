@@ -99,5 +99,33 @@ all repos with the latest version of _common by doing the following:
 	./dev.sh unlink
 	./dev.sh update
 
+Running the server without admin privlidges
+-------------------------------------------
 
+**Note**: These instructions were developed on mac, and instructions may differ on other platforms
 
+Without admin rights, you cannot add new gems (such as Bundler) to the Ruby installation. If you already have bundler installed on your system, you can go ahead and skip this. If you don't, you'll need to install [RVM](https://rvm.io) (Ruby Version Manager). You can do so simply using the two commands:
+
+	gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+	\curl -sSL https://get.rvm.io | bash -s stable
+
+You'll need to install `gpg` if you don't have it installed already. The first command adds the public key for the install server, and the second actually downloads and runs the install script. Double check RVM was installed by running the following command after opening a new terminal session:
+
+	type rvm | head -1
+	
+If you get `rvm is a function`, RVM was successfully installed. RVM, by default, does not actually have any copy of Ruby installed, so you'll need to install it:
+
+	rvm install ruby-head
+	
+This will install the latest stable version of ruby (in this case 2.2.4, it'll output the vesion when installing it). It'll go ahead and install ruby and the required gems. Next, you'll need to make sure you're using the RVM ruby and not the system ruby, as we don't have access to edit the system ruby. Run the following command to see which ruby you are running:
+
+	which ruby
+	
+If you get `.rvm` somewhere in the path, you are using the RVM ruby. If it says you are using the system ruby, run the following command to switch to the rvm ruby you just installed:
+
+	rvm use 2.2.4
+	
+From here, you can now install `bundler` and follow the instructions listed at the top of this document. I created my own shell script and added the following at the top of it to make sure it loaded the correct ruby: (I installed 2.3.0 instead of 2.2.4)
+
+	source ~/.rvm/scripts/rvm
+	rvm use 2.3.0
