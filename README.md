@@ -129,3 +129,22 @@ From here, you can now install `bundler` and follow the instructions listed at t
 
 	source ~/.rvm/scripts/rvm
 	rvm use 2.3.0
+
+"GitHub Metadata: No GitHub API authentication could be found" Error
+===========================================================================
+If you are editing locally, and when you save a file, it does not get updated on the local server, this may be the issue. Look at your console and see if you are getting this error:
+
+	Regenerating: 1 file(s) changed at 2016-09-13 13:10:58    GitHub Metadata: No GitHub API authentication could be found. Some fields may be missing or have incorrect data.
+	...error:
+   	Error: SSL_connect returned=1 errno=0 state=SSLv3 read server certificate B: certificate verify failed
+    	Error: Run jekyll build --trace for more information.
+	
+This is a known problem and can be solved by following these steps:
+
+1. Create a personal access token in GitHub. This takes just a second, see [GitHub’s documentation](https://help.github.com/articles/creating-an-access-token-for-command-line-use/). When picking the scope(s) that you want to grant to the token, just select the `repo` checkbox.
+2. Add a new system environment variable on your machine named `JEKYLL_GITHUB_TOKEN` and set the value equal to the personal access token you generated.
+3. [Go here](https://curl.haxx.se/ca/cacert.pem), copy all the text in the page, and save it as a file named cacert.pem somewhere on your local machine.
+4. Add a new system environment variable on your machine named `SSL_CERT_FILE` and set the value equal to the full file path of where you saved the `cacert.pem` file.
+5. RESTART YOUR MACHINE (this is not optional)
+
+Instructions courtest of [here](http://knightcodes.com/miscellaneous/2016/09/13/fix-github-metadata-error.html). Further instructions and a instruction video can be found there.
