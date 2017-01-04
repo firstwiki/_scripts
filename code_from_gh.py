@@ -41,7 +41,7 @@ def null_representer(dumper, value):
 try:
     yaml.CSafeDumper.add_representer(collections.OrderedDict, dict_representer)
     yaml.CSafeDumper.add_representer(type(None), null_representer)
-except ImportError:
+except (AttributeError, ImportError):
     pass
 
 
@@ -107,6 +107,7 @@ def normalize(w):
 class Processor:
     
     game_mapping = {
+        'steamworks': 2017,
         'stronghold': 2016,
         'recycle rush': 2015,
         'aerial assist': 2014,
@@ -389,7 +390,7 @@ if __name__ == '__main__':
     cache_path = abspath(join(dirname(__file__), '.cache'))
     p = Processor(cache_path)
     
-    name = name.replace('https://github.com/', '')
+    name = name.replace('https://github.com/', '').split('/')[0]
     data, guesses = p.process(name)
 
     if team:
