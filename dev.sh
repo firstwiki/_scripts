@@ -134,7 +134,12 @@ elif [ "$1" == "serve_site" ]; then
             jekyll serve --no-watch --skip-initial-build
         fi
     fi
-
+    
+elif [ "$1" == "team" ]; then
+    REPO=frc$(($2/1000*1000))
+    TEAMDIR=$(($2/100*100))
+    vi "${BASE}/${REPO}/_frc/${TEAMDIR}/$2.md"
+    
 else
-    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | serve_site | unlink | update_common]"
+    echo "Usage: $0 [cmd | cmderr | git | link | pull | push | serve_site | team | unlink | update_common]"
 fi
