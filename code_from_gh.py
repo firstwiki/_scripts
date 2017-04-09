@@ -344,6 +344,10 @@ class Processor:
                 fcontents = frontmatter.dumps(fm)
                 
                 if not doit:
+                    print("Old contents")
+                    with open(team_path) as fp:
+                        print(fp.read())
+                    
                     print("Would write to file:")
                     print(fcontents)
                     
@@ -354,6 +358,9 @@ class Processor:
                     
                     with open(team_path, 'w') as fp:
                         fp.write(fcontents)
+                        
+                    if yesno("Edit it?"):
+                        os.system('"%s" "%s"' % (os.environ.get("EDITOR", "vi"), team_path))
             else:
                 print("No changes detected")
         #pprint.pprint(fm)
