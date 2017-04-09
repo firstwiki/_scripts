@@ -3,7 +3,7 @@
 # Script for managing the _common directory. It's easier to do development if
 # using symlinks.
 
-if [ $(readlink -f "$0" &> /dev/null) ]; then
+if readlink -f "$0" &> /dev/null; then
     ROOT="$( cd "$( dirname "$(readlink -f "$0")" )" && pwd )"
 else
     ROOT="$( cd "$( dirname "$(readlink "$0")" )" && pwd )"
