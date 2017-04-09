@@ -136,9 +136,9 @@ elif [ "$1" == "serve_site" ]; then
     fi
     
 elif [ "$1" == "team" ]; then
-    REPO=frc$(($2/1000*1000))
+    REPO=$(($2/1000*1000))
     TEAMDIR=$(($2/100*100))
-    vi "${BASE}/${REPO}/_frc/${TEAMDIR}/$2.md"
+    vi "${BASE}/frc$(seq -f "%04g" $REPO $REPO)/_frc/${TEAMDIR}/$2.md"
     
 else
     echo "Usage: $0 [cmd | cmderr | git | link | pull | push | serve_site | team | unlink | update_common]"
