@@ -4,12 +4,13 @@
 #  pip install PyGithub python-frontmatter
 #
 
+import difflib
 import json
 from optparse import OptionParser
 import os
-from os.path import abspath, dirname, exists, join
+from os.path import abspath, dirname, exists, join, getmtime
 import pprint
-import sys
+import time
 
 import github
 import frontmatter
@@ -51,14 +52,14 @@ yaml.SafeDumper.add_representer(type(None), null_representer)
 yaml.SafeLoader.add_constructor(_mapping_tag, dict_constructor)
 
 
-def _parse(text, **defaults):
-    text = frontmatter.u(text)
+def _parse(text, encoding, **defaults):
+    text = frontmatter.u(text, encoding).strip()
     
     # metadata starts with defaults
     metadata = defaults.copy()
     
     try:
-        _, fm, content = frontmatter.FM_BOUNDARY.split(text, 2)
+        _, fm, content = frontmatter.YAMLHandler.FM_BOUNDARY.split(text, 2)
     except ValueError:
         return metadata, text
     
@@ -70,8 +71,8 @@ def _parse(text, **defaults):
         
     return metadata, content.strip()
 
-def _loads(text, **defaults):
-    metadata, content = _parse(text, **defaults)
+def _loads(text, encoding='utf-8', handler=None, **defaults):
+    metadata, content = _parse(text, encoding, **defaults)
     post = frontmatter.Post(content)
     post.metadata = metadata
     return post
@@ -89,7 +90,7 @@ def yesno(prompt):
         if v in ['y', 'yes']:
             return True
         elif v in ['n', 'no']:
-            return False 
+            return False
 
 def choose_n(n):
     while True:
@@ -107,6 +108,7 @@ def normalize(w):
 class Processor:
     
     game_mapping = {
+        'powerup': 2018,
         'steamworks': 2017,
         'stronghold': 2016,
         'recycle rush': 2015,
@@ -136,13 +138,44 @@ class Processor:
         self.cache_path = cache_path
     
     
+    def scan_all(self, scan_start):
+        for team in range(scan_start, 7000):
+            try:
+                fm, _ = self.get_team_data(team)
+            except IOError:
+                print("Not found")
+                continue
+            
+            # load frontmatter
+            try:
+                links = fm['team']['links']
+            except KeyError:
+                continue
+            
+            gh_page = links.get('GitHub')
+            if not gh_page:
+                gh_page = links.get('Github')
+            if not gh_page:
+                gh_page = links.get('github')
+            
+            if not gh_page:
+                continue
+            
+            # if it has a github page, then call the thing
+            data, guesses = self.process(gh_page, team)
+            p.add_guesses_to_page(team, data, guesses, False)
+    
     def _get_org_or_user(self, name):
         
         cache_file = join(self.cache_path, '%s.json' % name.lower())
         
         if exists(cache_file):
-            with open(cache_file, 'r') as fp:
-                return json.load(fp)
+            
+            # if the cache is older than a week, reload
+            mtime = getmtime(cache_file)
+            if time.time() - mtime < 60*60*24*7:
+                with open(cache_file, 'r') as fp:
+                    return json.load(fp)
        
         try:
             org = self.gh.get_organization(name)
@@ -156,7 +189,7 @@ class Processor:
             'html_url': org.html_url,
             'blog': org.blog,
             'name': org.name,
-            'repos': repos 
+            'repos': repos
         }
         
         for repo in org.get_repos():
@@ -199,6 +232,7 @@ class Processor:
         return 'Robot'
     
     filter_words = [
+        'offseason',
         'practice',
         'testing',
         'website',
@@ -219,11 +253,16 @@ class Processor:
             
         return True
         
-    def process(self, name):
+    def process(self, name, team):
         
+        team_data = None
+        if team:
+            team_data, team_path = self.get_team_data(team)
+        
+        name = name.replace('https://github.com/', '').split('/')[0]
         data = self._get_org_or_user(name)
         
-        print("Github:", data['html_url'])
+        print("GitHub:", data['html_url'])
         print("Website:", data['blog'])
         
         # year: {type: [repos]}
@@ -268,7 +307,22 @@ class Processor:
                 
                 vv[:] = filter(self.filter_false_positives, vv)
                 if len(vv) > 1:
-                    # if it can't guess, ask user
+                    # if it can't guess and the data does not already exist, ask user
+                    # -> so check if it exists
+                    if team_data and 'robot_code' in team_data.metadata:
+                        found = False
+                        urls = set([vvv['html_url'] for vvv in vv])
+                        for td_year, ydata in team_data['robot_code'].items():
+                            if td_year != year:
+                                continue
+                            for td_data in ydata:
+                                for td_type, tdt_data in td_data.items():
+                                    if td_type == ctype and tdt_data[0] in urls:
+                                        found = True
+                                        break
+                        if found:
+                            break
+                    
                     print("WARN: Could not guess! (%s %s)" % (year, ctype))
                     
                     for i, vvv in enumerate(vv):
@@ -282,8 +336,7 @@ class Processor:
         
         return data, guesses
     
-    def add_guesses_to_page(self, team, data, guesses, doit):
-    
+    def get_team_data(self, team):
         p = 'frc%04d' % (int(int(team)/1000)*1000)
         sp = '%03d' % (int(int(team)/100)*100)
         
@@ -291,8 +344,17 @@ class Processor:
         print("Path:", team_path)
     
         fm = frontmatter.load(team_path)
+        return fm, team_path
+    
+    def add_guesses_to_page(self, team, data, guesses, doit):
+    
+        fm, team_path = self.get_team_data(team)
         
-        fm['team']['links']['Github'] = data['html_url']
+        fm['team']['links']['GitHub'] = data['html_url']
+        if 'Github' in fm['team']['links']:
+            del fm['team']['links']['Github']
+        if 'github' in fm['team']['links']:
+            del fm['team']['links']['github']
         
         if data['blog']:
             fm['team']['links']['Website'] = data['blog']
@@ -344,12 +406,17 @@ class Processor:
                 fcontents = frontmatter.dumps(fm)
                 
                 if not doit:
-                    print("Old contents")
                     with open(team_path) as fp:
-                        print(fp.read())
+                        old_contents = fp.read()
                     
                     print("Would write to file:")
+                    print(old_contents)
                     print(fcontents)
+                    
+                    print("Diff")
+                    for line in difflib.unified_diff(old_contents.splitlines(), fcontents.splitlines(),
+                                                     fromfile='old_contents', tofile='new_contents'):
+                        print(line)
                     
                     doit = yesno("Write it?")
                     
@@ -363,26 +430,16 @@ class Processor:
                         os.system('"%s" "%s"' % (os.environ.get("EDITOR", "vi"), team_path))
             else:
                 print("No changes detected")
-        #pprint.pprint(fm)
-    
-        # determine team number
-        # find page
-        # read existing front matter
-        # if it already exists, don't replace it!
-        
-        # populate website if org has website
-        # populate github link
-        
-        # populate robot_code with guesses
-        
+
 if __name__ == '__main__':
     
     parser = OptionParser("%prog REPO [TEAM]")
     
+    parser.add_option('--scan', default=None, action='store_true', help="Update all teams")
+    parser.add_option('--scan-start', default=1, type=int)
     parser.add_option('--doit', default=False, action='store_true', help='Actually write results to disk')
     
     options, args = parser.parse_args()
-    
     
     if len(args) == 1:
         name = args[0]
@@ -390,16 +447,18 @@ if __name__ == '__main__':
     elif len(args) == 2:
         name = args[0]
         team = args[1]
-    else:
+    elif not options.scan:
         parser.error("must specify a repo")
         exit(1)
     
     cache_path = abspath(join(dirname(__file__), '.cache'))
     p = Processor(cache_path)
     
-    name = name.replace('https://github.com/', '').split('/')[0]
-    data, guesses = p.process(name)
+    if options.scan:
+        p.scan_all(options.scan_start)
+    else:
+        data, guesses = p.process(name, team)
 
-    if team:
-        p.add_guesses_to_page(team, data, guesses, options.doit)
-    
+        if team:
+            p.add_guesses_to_page(team, data, guesses, options.doit)
+        
