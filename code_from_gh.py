@@ -84,13 +84,15 @@ frontmatter.loads = _loads
 # End terrible hack
 #
 
-def yesno(prompt):
+def yesnoedit(prompt):
     while True:
-        v = input("%s [Y/N]? " % prompt).lower()
+        v = input("%s [Y/N/E]? " % prompt).lower()
         if v in ['y', 'yes']:
             return True
         elif v in ['n', 'no']:
             return False
+        elif v in ['e', 'edit']:
+            return 'edit'
 
 def choose_n(n):
     while True:
@@ -137,9 +139,8 @@ class Processor:
         self.gh = github.Github(login_or_token=os.environ['GITHUB_TOKEN'])
         self.cache_path = cache_path
     
-    
     def scan_all(self, scan_start):
-        for team in range(scan_start, 7000):
+        for team in range(scan_start, 9999):
             try:
                 fm, _ = self.get_team_data(team)
             except IOError:
@@ -205,11 +206,22 @@ class Processor:
                       indent=4, separators=(',', ': '))
             
         return data
-        
+    
+    languages = ["Android", "Arduino", "C++", "C", "C#", "F#", "Golang", "HTML", "Javascript",
+       "Java", "Kotlin", "LabVIEW", "LaTeX", "PBASIC", "PHP",
+       "Python", "RoboRealm", "Ruby", "Rust", "Scala", "Swift"
+    ]
+    
+    lang_lower = {l.lower(): l for l in languages}
+    
+    def _convert_language(self, l):
+        if l:
+            return self.lang_lower.get(l.lower())
     
     vision_keywords = ['vision', 'image', 'img', 'camera', 'target', 'track']
     ui_keywords = ['dashboard', 'driver station', 'ui']
     scouting_keywords = ['scouting']
+    sim_keywords = ['simulation', 'simulator']
         
     def guess_type(self, name, desc):
         
@@ -228,6 +240,10 @@ class Processor:
             if kw in name or kw in desc:
                 return 'Dashboard'
         
+        for kw in self.sim_keywords:
+            if kw in name or kw in desc:
+                return 'Simulation'
+        
         # No guess? Default to robot code...
         return 'Robot'
     
@@ -240,8 +256,6 @@ class Processor:
         'beta',
         'ftc'
     ]
-    
-    
     
     def filter_false_positives(self, repo):
         name = normalize(repo['name'])
@@ -273,7 +287,11 @@ class Processor:
             name = normalize(repo['name'])
             desc = normalize(repo['description'])
             
-            print("-> '%s': '%s' (%s)" % (name, desc, repo['language']))
+            repo['language'] = lang = self._convert_language(repo['language'])
+            if not lang:
+                continue
+            
+            print("-> '%s': '%s' (%s)" % (name, desc, lang))
         
             # find things with 'year' in them... 2014, 2015, 2016
             for year in self.years:
@@ -307,21 +325,21 @@ class Processor:
                 
                 vv[:] = filter(self.filter_false_positives, vv)
                 if len(vv) > 1:
-                    # if it can't guess and the data does not already exist, ask user
+                    # if it can't guess and the datatype does not already exist, ask user
                     # -> so check if it exists
                     if team_data and 'robot_code' in team_data.metadata:
                         found = False
-                        urls = set([vvv['html_url'] for vvv in vv])
                         for td_year, ydata in team_data['robot_code'].items():
                             if td_year != year:
                                 continue
                             for td_data in ydata:
                                 for td_type, tdt_data in td_data.items():
-                                    if td_type == ctype and tdt_data[0] in urls:
+                                    if td_type == ctype:
                                         found = True
                                         break
                         if found:
-                            break
+                            vv[:] = []
+                            continue
                     
                     print("WARN: Could not guess! (%s %s)" % (year, ctype))
                     
@@ -395,7 +413,7 @@ class Processor:
                         # if the URL already exists, then don't change the language
                     else:
                         # if it doesn't exist, set it
-                        existing_types[ctype] = [repo['html_url'], repo['language']]
+                        existing_types[ctype] = [repo['html_url'], self._convert_language(repo['language'])]
                         changed = True
         
             if need_sort:
@@ -410,7 +428,6 @@ class Processor:
                         old_contents = fp.read()
                     
                     print("Would write to file:")
-                    print(old_contents)
                     print(fcontents)
                     
                     print("Diff")
@@ -418,7 +435,7 @@ class Processor:
                                                      fromfile='old_contents', tofile='new_contents'):
                         print(line)
                     
-                    doit = yesno("Write it?")
+                    doit = yesnoedit("Write it (or write and edit)?")
                     
                 if doit:
                     print("Writing to file")
@@ -426,7 +443,7 @@ class Processor:
                     with open(team_path, 'w') as fp:
                         fp.write(fcontents)
                         
-                    if yesno("Edit it?"):
+                    if doit == 'edit':
                         os.system('"%s" "%s"' % (os.environ.get("EDITOR", "vi"), team_path))
             else:
                 print("No changes detected")

@@ -26,6 +26,12 @@ def add_maybe(d, f, v):
     else:
         d[f] = v
 
+def add_maybe_web(d, k, nv):
+    if nv:
+        v = d.get(k)
+        if v is None or v.lower().strip('/') != nv.lower().strip('/'):
+            d[k] = nv
+
 def main():
 
     # input is teams csv datafile from TBA
@@ -42,7 +48,7 @@ def main():
     cwd = os.getcwd()
     
     for row in read_team_csv(csv_fname):
-        # this changes on occasion... 
+        # this changes on occasion...
         number, name, sponsors, l1, l2, l3, website, rookie_year, \
             facebook, twitter, youtube, github, instagram, periscope = row
         
@@ -115,32 +121,20 @@ def main():
         add_maybe(team, 'rookie_year', rookie_year)
         add_maybe(team, 'location', location)
         
-        if sponsors:
+        if sponsors and mode != 'update':
             team['sponsors'] = sponsors
         
         if 'Github' in links:
             links['GitHub'] = links['Github']
             del links['Github']
         
-        add_maybe(links, 'Website', website)
-            
-        if facebook:
-            links['Facebook'] = facebook
-            
-        if twitter:
-            links['Twitter'] = twitter
-        
-        if youtube:
-            links['YouTube'] = youtube
-        
-        if github:
-            links['GitHub'] = github
-        
-        if instagram:
-            links['Instagram'] = instagram
-            
-        if periscope:
-            links['Periscope'] = periscope
+        add_maybe_web(links, 'Website', website)
+        add_maybe_web(links, 'Facebook', facebook)
+        add_maybe_web(links, 'Twitter', twitter)
+        add_maybe_web(links, 'YouTube', youtube)
+        add_maybe_web(links, 'GitHub', github)
+        add_maybe_web(links, 'Instagram', instagram)
+        add_maybe_web(links, 'Periscope', periscope)
         
         if mode == 'update':
             
@@ -175,4 +169,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
